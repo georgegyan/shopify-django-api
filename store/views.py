@@ -1,6 +1,15 @@
 from rest_framework import generics, permissions
-from .models import Category, Product, Order
-from .serializers import CategorySerializer, ProductSerializer, OrderSerializer
+from .models import Category, Product, Order, User
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CategorySerializer, ProductSerializer, OrderSerializer, MyTokenObtainPairSerializer, UserSerializer, CartSerializer, CartItemSerializer
+from .models import Cart, CartItem
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 class CategoryList(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -40,3 +49,19 @@ class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         return Order.objects.filter(user=user)
+
+class CartView(generics.RetrieveAPIView):
+    serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        cart, created = Cart.objects.get_or_create(user=self.request.user)
+        return cart
+
+class AddToCartView(generics.CreateAPIView):
+    serializer_class = CartItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        cart, _ = Cart.objects.get_or_create(user=self.request.user)
+        serializer.save(cart=cart)
