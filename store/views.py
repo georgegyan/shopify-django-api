@@ -1,12 +1,15 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, filters
 from .models import Category, Product, Order, User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CategorySerializer, ProductSerializer, OrderSerializer, MyTokenObtainPairSerializer, UserSerializer, CartSerializer, CartItemSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import Product, ProductFilter
 from .models import Cart, CartItem
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -24,6 +27,9 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = ProductFilter
+    search_fields = ['name', 'description']
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
